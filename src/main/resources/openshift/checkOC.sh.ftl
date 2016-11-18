@@ -5,9 +5,10 @@
     FOR A PARTICULAR PURPOSE. THIS CODE AND INFORMATION ARE NOT SUPPORTED BY XEBIALABS.
 
 -->
-
+#!/bin/sh
 set -e
 <#include "/openshift/oc-login-container.ftl">
 
 ${container.ocHome}/oc status
+${container.ocHome}/oc logout
 

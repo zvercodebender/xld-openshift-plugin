@@ -5,6 +5,7 @@
     FOR A PARTICULAR PURPOSE. THIS CODE AND INFORMATION ARE NOT SUPPORTED BY XEBIALABS.
 
 -->
+#!/bin/sh
 set -e
 <#if deployed.description?has_content>
     <#assign description=deployed.description />
@@ -27,3 +28,5 @@ then
 else
     ${deployed.container.ocHome}/oc new-project ${deployed.projectName} --description="${description}" --display-name="${displayName}"
 fi;
+
+${deployed.container.ocHome}/oc logout

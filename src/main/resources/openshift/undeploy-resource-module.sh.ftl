@@ -5,7 +5,7 @@
     FOR A PARTICULAR PURPOSE. THIS CODE AND INFORMATION ARE NOT SUPPORTED BY XEBIALABS.
 
 -->
-
+#!/bin/sh
 set -e
 <#include "/openshift/oc-login-previousDeployed.ftl">
 
@@ -14,3 +14,4 @@ echo "destroy resource"
 ${previousDeployed.container.ocHome}/oc project ${previousDeployed.project}
 ${previousDeployed.container.ocHome}/oc delete -f ${previousDeployed.file.path}
 ${previousDeployed.container.ocHome}/oc status
+${previousDeployed.container.ocHome}/oc logout

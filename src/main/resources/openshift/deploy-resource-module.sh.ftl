@@ -5,7 +5,7 @@
     FOR A PARTICULAR PURPOSE. THIS CODE AND INFORMATION ARE NOT SUPPORTED BY XEBIALABS.
 
 -->
-
+#!/bin/sh
 set -e
 <#include "/openshift/oc-login-deployed.ftl">
 
@@ -15,3 +15,4 @@ ${deployed.container.ocHome}/oc project ${deployed.project}
 echo "create new resource"
 ${deployed.container.ocHome}/oc create -f ${deployed.file.path} -n ${deployed.project}
 ${deployed.container.ocHome}/oc status
+${deployed.container.ocHome}/oc logout

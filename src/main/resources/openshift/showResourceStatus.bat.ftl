@@ -5,10 +5,11 @@
     FOR A PARTICULAR PURPOSE. THIS CODE AND INFORMATION ARE NOT SUPPORTED BY XEBIALABS.
 
 -->
-#!/bin/sh
-set -e
-<#assign container=previousDeployed.container />
+<#assign container=container.server />
 <#include "/openshift/oc-login-container.ftl">
 
-${previousDeployed.container.ocHome}/oc delete project ${previousDeployed.projectName}
-${previousDeployed.container.ocHome}/oc logout
+${container.server.ocHome}/oc describe quota -n ${params.projectName} || goto :error
+${container.server.ocHome}/oc logout || goto :error
+goto :EOF
+
+<#include "/openshift/error.bat.ftl">

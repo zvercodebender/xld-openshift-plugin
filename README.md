@@ -21,12 +21,13 @@ See the **XL Deploy Reference Manual** for background information on XL Deploy a
 
 # Overview #
 
-This XLD OpenShift plugin supports v2 & v3 OpenShift implementations.  This plugin allows you to manage the deployment of OpenShift projects, containers and resources to your OpenShift infrastructure.  Additionaly this plugin still supports doing WAR deployment to OpenShift JBoss gear. It uses rhc client to push to OpenShift environments.
+This XLD OpenShift plugin supports v2 & v3 OpenShift implementations.  This plugin allows you to manage the deployment of OpenShift projects, containers and resources to your OpenShift infrastructure.  Additionally this plugin still supports doing WAR deployment to OpenShift JBoss gear. It uses rhc client to push to OpenShift environments.
 
 # Requirements #
 
 * **Requirements**
-	* **XL Deploy** 5.1.3+
+	* From version v7.x+, XLD 6.x is required.
+	* **Remark**: version v7.x+ breaks compatibility with previous versions! 
 	* **rhc client on target machine for OpenShift v2** 
 	* **oc client on target machine for OpenShift v3** 
 
@@ -43,22 +44,25 @@ utility on a server.
 * OpenShift Containers
 
 	* **openshift.Server**
-	   The `openshift.server` represents the Open Shift server and is the container where the open shift `oc` commands will be exectued.  The `openshift.Server` container object is defined as follows:
+	   The `openshift.server` represents the OpenShift server and is the container where the open shift `oc` commands will be exectued.  The `openshift.Server` container object is defined as follows:
 	   
 	   `openshift.Server` extends `udm.BaseContainer`
 	   
-	   | Properties     |           Description                               |
-	   |----------------|-----------------------------------------------------|
-	   | host           | Overthere.Host that contains the `openshift.Server` |
-	   | serverUrl      | URL to the OpenShift Admin Interface                |
-	   | ocHome         | The `HOME` directory where the `oc` client is installed |
+	   | Properties     |           Description                                               |
+	   |----------------|---------------------------------------------------------------------|
+	   | host           | `overthere.Host` that contains the `openshift.Server`               |
+	   | serverUrl      | URL to the OpenShift Admin Interface                                |
+	   | ocHome         | The `HOME` directory where the `oc` client is installed             |
+	   | installClient  | If true, the oc client will be downloaded, and placed under ocHome. |
+	   | ocUrl          | Download url to get oc client                                       |
+	   | skipTLS        | Set to true if you want to skip TLS verification                    |
 	   | authentication | An enumeration of possible authentication types:<ul><li>Basic</li><li>Token</li><li>Basic Alias</li><li>Token Alias</li></ul>|
-	   | username       | The usename to authenticate to the OpenShift server |
-	   | password       | The password to authenticate to the OpenShift server|
-	   | openshiftToken | An OpenShift token for token authentication         |
-	   | credential     | A Custom `openshift.Credentail` type                |
+	   | username       | The username to authenticate to the OpenShift server                |
+	   | password       | The password to authenticate to the OpenShift server                |
+	   | openshiftToken | An OpenShift token for token authentication                         |
+	   | credential     | A Custom `openshift.Credential` type                                |
 	   
-	   Depending on the authentication method some of the properties will be required.  Required properties for specific authenticaiton methods are as follows:
+	   Depending on the authentication method some of the properties will be required.  Required properties for specific authentication methods are as follows:
 	   
 	   * **BASIC:**
 	      * Username
@@ -73,28 +77,55 @@ utility on a server.
 	      * credential `openshift.Credential`
 	         * Token
 	   
-	   The `openshift.Server` has two control tasks that can be use to verft the configuration as follows:
+	   The `openshift.Server` has two control tasks that can be use to verify the configuration as follows:
 	   * ***check:*** This control task will log into the OpenShift server using the **oc** command line tool to verify connectivity to the OpenShift server.
 	   * **showResource:** This control task can be use to check on the available resources for a project.  You will be expect to provide a project name to execute this control task.
 	   
-* OpenShift Deployables
+	   **Note**
+       To install the `oc` client, on Unix hosts, the plugin will use `wget`that should be already installed.
+       On Windows hosts, there are 2 options
+       
+       * use a version of `wget` bundled in the plugin and uploaded to perform the http request. (default option)
+       * use a _different_ `wget` that is _already present_ on the path of your target systems you can simply prevent the included version from being uploaded by modifying `SERVER_HOME/conf/deployit-defaults.properties` as follows:
+       ```
+       	# Classpath Resources
+       	# openshift.Server.wgetExecutable=openshift/runtime/wget.exe
+       ```
+       to
+       ```
+       	# Classpath Resources
+       	openshift.Server.wgetExecutable=[Put your path here]
+	   ```
 	   
-    * **openshift.Project:**
-       An OpenShift project Module.  The project module is defined as follows:
+    * **openshift.Project**
+       An OpenShift project.  The project module is defined as follows:
     
-       `openshift.ProjectModule` extends `udm.BasedDeployed`
+       `openshift.Project` extends `udm.BaseContainer`
     
        | Properties      |         Description                      |
        |-----------------|------------------------------------------|
        | projectName     | A name for the project                   |
        | description     | A description of this project            |
        | projectDisplayName | A human readable name for the project |
+
+* OpenShift Provisionables
+    * **openshift.openshift.ProjectSpec**
+       An OpenShift project spec.  The project spec is defined as follows:
     
+       `openshift.ProjectSpec` extends `udm.BaseProvisionable`
     
-    * **openshift.App:**
+       | Properties      |         Description                      |
+       |-----------------|------------------------------------------|
+       | projectName     | A name for the project                   |
+       | description     | A description of this project            |
+       | projectDisplayName | A human readable name for the project |
+
+* OpenShift Deployables
+	       
+    * **openshift.App**
        The OpenShift App is a container image that can be deployed from a registry.  By default XLD will deploy container images from the Docker Hub, but it is possible to supply and internal URL for a local repository.  The App module is defined as follows:
        
-       `openshift.App` extends `udm.BaseDeployed`
+       `openshift.App` extends `udm.BaseDeployable`
        
        | Properties         |        Description                |
        |--------------------|-----------------------------------|
@@ -110,7 +141,7 @@ utility on a server.
     * **openshift.BinaryApp:**
       An OpenShift Binary App is an actual container file that should be deployed to a OpenShift project.  The Binary App module is defined as follows:
       
-      `openshift.BinaryAppModule` extends `udm.BasedDeployedArtifact`
+      `openshift.BinaryAppModule` extends `udm.BaseDeployableArtifact`
       
       |  Properties         |       Description                 |
       |---------------------|-----------------------------------|
@@ -118,9 +149,19 @@ utility on a server.
       | project             | OpenShift project name.           |
       | imageStream         | The input stream to use as the builder |
       
+    * **openshift.DockerfileApp:**
+      An OpenShift Docker App is an actual Dockerfile that should be deployed to a OpenShift project.  The Dockerfile app module is defined as follows:
+      
+      `openshift.DockerfileAppModule` extends `udm.BaseDeployableArtifact`
+      
+      |  Properties         |       Description                 |
+      |---------------------|-----------------------------------|
+      | appName             | OpenShift application name        |
+      | project             | OpenShift project name.           |
+      
     * **openshift.ResourceModule:** The resource module defines the resources availble to the project.  The definition of the resources are defined in a YAML file attached to this deployable.  The Resource Modules is defined as follows:
     
-      `openshift.ResourceModule` extends `udm.BaseDeployedArtifact`
+      `openshift.ResourceModule` extends `udm.BaseDeployableArtifact`
     
       |  Properties         |       Description                 |
       |---------------------|-----------------------------------|

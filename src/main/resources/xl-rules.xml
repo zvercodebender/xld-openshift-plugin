@@ -26,6 +26,7 @@
         <conditions>
             <type>openshift.ProjectModule</type>
             <operation>DESTROY</operation>
+            <operation>MODIFY</operation>
         </conditions>
         <steps>
             <os-script>
@@ -45,6 +46,7 @@
             <os-script>
                 <script>openshift/deploy-app-module</script>
                 <order>61</order>
+                <target-host expression="true">deployed.container.server.host</target-host>
             </os-script>
         </steps>
     </rule>
@@ -59,6 +61,7 @@
             <os-script>
                 <script>openshift/undeploy-app-module</script>
                 <order>60</order>
+                <target-host expression="true">previousDeployed.container.server.host</target-host>
             </os-script>
         </steps>
     </rule>
@@ -73,13 +76,30 @@
             <os-script>
                 <script>openshift/deploy-binary-app-module</script>
                 <order>61</order>
+                <target-host expression="true">deployed.container.server.host</target-host>
             </os-script>
         </steps>
     </rule>
 
-    <rule name="openshift.BinaryAppModule.DESTROY" scope="deployed">
+    <rule name="openshift.DockerfileAppModule.CREATE_MODIFY" scope="deployed">
+        <conditions>
+            <type>openshift.DockerfileAppModule</type>
+            <operation>CREATE</operation>
+            <operation>MODIFY</operation>
+        </conditions>
+        <steps>
+            <os-script>
+                <script>openshift/deploy-dockerfile-app-module</script>
+                <order>61</order>
+                <target-host expression="true">deployed.container.server.host</target-host>
+            </os-script>
+        </steps>
+    </rule>
+
+    <rule name="openshift.SourceAppModule.DESTROY" scope="deployed">
         <conditions>
             <type>openshift.BinaryAppModule</type>
+            <type>openshift.DockerfileAppModule</type>
             <operation>DESTROY</operation>
             <operation>MODIFY</operation>
         </conditions>
@@ -87,6 +107,7 @@
             <os-script>
                 <script>openshift/undeploy-app-module</script>
                 <order>60</order>
+                <target-host expression="true">previousDeployed.container.server.host</target-host>
             </os-script>
         </steps>
     </rule>
@@ -100,7 +121,9 @@
         <steps>
             <os-script>
                 <script>openshift/deploy-resource-module</script>
+                <description expression="true">"Create resource [%s] on project [%s]" % (deployed.name, deployed.container.name)</description>
                 <order>70</order>
+                <target-host expression="true">deployed.container.server.host</target-host>
             </os-script>
         </steps>
     </rule>
@@ -109,11 +132,14 @@
         <conditions>
             <type>openshift.ResourceModule</type>
             <operation>DESTROY</operation>
+            <operation>MODIFY</operation>
         </conditions>
         <steps>
             <os-script>
                 <script>openshift/undeploy-resource-module</script>
+                <description expression="true">"Destroy resource [%s] on project [%s]" % (previousDeployed.name, previousDeployed.container.name)</description>
                 <order>40</order>
+                <target-host expression="true">previousDeployed.container.server.host</target-host>
             </os-script>
         </steps>
     </rule>

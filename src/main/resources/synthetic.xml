@@ -18,7 +18,10 @@
         <!-- client -->
         <property name="ocHome" required="true" description="Location where the oc client can be found." category="client"/>
         <property name="installClient" required="false" kind="boolean" description="If true, the oc client will be downloaded, and placed under ocHome." category="client"/>
-        <property name="ocUrl" required="true" default="https://github.com/openshift/origin/releases/download/v1.2.2/openshift-origin-client-tools-v1.2.2-565691c-linux-64bit.tar.gz" description="Download url to get oc client" hidden="true" category="client"/>
+        <property name="ocUrl" required="true" default="https://github.com/openshift/origin/releases/download/v1.3.2/openshift-origin-client-tools-v1.3.2-ac1d579-linux-64bit.tar.gz" description="Download url to get oc client" hidden="false" category="client"/>
+        <property name="skipTLS" required="false" default="true" kind="boolean" category="client" description="Set to true if you want to skip TLS verification" />
+        <property name="zipUrl" required="true" default="http://www.7-zip.org/a/7z1604-x64.exe" hidden="true" category="client" />
+        <property name="wgetExecutable" hidden="true" default="openshift\runtime\wget.exe" category="client"/>
 
         <!-- security -->
         <property name="authentication" kind="enum" required="true" description="Define which authentication should be used" category="security">
@@ -37,21 +40,23 @@
                   delegate="shellScript"
                   host="${thisCi.host}"
                   script="openshift/checkOC" />
+    </type>
+    <type type="openshift.Project" extends="udm.BaseContainer">
+        <property name="server" kind="ci" referenced-type="openshift.Server" as-containment="true" description="The openshift server this project is part of."/>
+        <property name="projectName" required="true"/>
+        <property name="description" required="false"/>
+        <property name="projectDisplayName" required="false"/>
         <method   name="showResource"
                   delegate="shellScript"
-                  host="${thisCi.host}"
+                  host="${thisCi.server.host}"
                   script="openshift/showResourceStatus" >
-            <parameters>
-                <parameter name="projectName"/>
-            </parameters>
         </method>
     </type>
 
-    <!-- v3 deployables -->
-    <!-- v3 project - should already exist. -->
-    <type type="openshift.ProjectModule" extends="udm.BaseDeployed" deployable-type="openshift.Project"
-          container-type="openshift.Server" description="OpenShift Project">
-        <generate-deployable type="openshift.Project" extends="udm.BaseDeployable"/>
+    <!-- v3 deployables / provisionables -->
+    <!-- v3 project -->
+    <type type="openshift.ProjectModule" extends="udm.BaseProvisioned" deployable-type="openshift.ProjectSpec" container-type="openshift.Server" description="OpenShift Project.">
+        <generate-deployable type="openshift.ProjectSpec" extends="udm.BaseProvisionable" copy-default-values="true" description="Specification for an OpenShift project."/>
         <property name="projectName" required="true"/>
         <property name="description" required="false"/>
         <property name="projectDisplayName" required="false"/>
@@ -59,10 +64,9 @@
 
     <!-- v3 app -->
     <type type="openshift.AppModule" extends="udm.BaseDeployed" deployable-type="openshift.App"
-          container-type="openshift.Server" description="OpenShift App">
+          container-type="openshift.Project" description="OpenShift App">
         <generate-deployable type="openshift.App" extends="udm.BaseDeployable"/>
         <property name="appName" required="true"/>
-        <property name="project" required="true"/>
         <property name="dockerUrl" required="false" label="Docker Url" category="Docker" description="Docker base url to be used."/>
         <property name="dockerOrganization" required="false" label="Docker Organization" category="Docker" description="Docker organization name."/>
         <property name="dockerName" required="false" label="Docker Image Name" category="Docker" description="Docker image name."/>
@@ -70,18 +74,27 @@
     </type>
 
     <type type="openshift.BinaryAppModule" extends="udm.BaseDeployedArtifact" deployable-type="openshift.BinaryApp"
-          container-type="openshift.Server" description="OpenShift Binary App">
+          container-type="openshift.Project" description="OpenShift Binary App">
         <generate-deployable type="openshift.BinaryApp" extends="udm.BaseDeployableArtifact"/>
         <property name="appName" required="true"/>
-        <property name="project" required="true"/>
         <property name="imageStream" required="true" label="Image Stream" description="Name of an image stream to to use as a builder."/>
     </type>
 
-    <type type="openshift.ResourceModule" extends="udm.BaseDeployedArtifact" deployable-type="openshift.Resource"
-          container-type="openshift.Server" description="OpenShift Resource">
-        <generate-deployable type="openshift.Resource" extends="udm.BaseDeployableArtifact"/>
-        <property name="project"     required="true"  description="Project Name"/>
+    <!-- Allows uploading a Dockerfile as source -->
+    <type type="openshift.DockerfileAppModule" extends="udm.BaseDeployedArtifact" deployable-type="openshift.DockerfileApp"
+          container-type="openshift.Project" description="OpenShift Dockerfile App">
+        <generate-deployable type="openshift.DockerfileApp" extends="udm.BaseDeployableArtifact"/>
+        <property name="appName" required="true"/>
     </type>
+
+    <type type="openshift.ResourceModule" extends="udm.BaseDeployedArtifact" deployable-type="openshift.Resource"
+          container-type="openshift.Project" description="OpenShift Resource">
+        <generate-deployable type="openshift.Resource" extends="udm.BaseDeployableArtifact"/>
+    </type>
+
+    <type-modification type="openshift.Resource">
+        <property name="textFileNamesRegex" hidden="true" default=".+\.(cfg | conf | config | ini | properties | props | txt | asp | aspx | htm | html | jsf | jsp | xht | xhtml | sql | xml | xsd | xsl | xslt | json | yml | yaml )" />
+    </type-modification>
 
     <!-- OpenShift v2 -->
     <!-- v2 container -->

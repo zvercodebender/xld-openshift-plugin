@@ -5,10 +5,6 @@
     FOR A PARTICULAR PURPOSE. THIS CODE AND INFORMATION ARE NOT SUPPORTED BY XEBIALABS.
 
 -->
-#!/bin/sh
-set -e
-<#assign container=previousDeployed.container />
-<#include "/openshift/oc-login-container.ftl">
-
-${previousDeployed.container.ocHome}/oc delete project ${previousDeployed.projectName}
-${previousDeployed.container.ocHome}/oc logout
+:error
+echo Failed with error #%errorlevel%.
+exit /b %errorlevel%

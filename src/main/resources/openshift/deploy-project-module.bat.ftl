@@ -5,8 +5,6 @@
     FOR A PARTICULAR PURPOSE. THIS CODE AND INFORMATION ARE NOT SUPPORTED BY XEBIALABS.
 
 -->
-#!/bin/sh
-set -e
 <#if deployed.description?has_content>
     <#assign description=deployed.description />
 <#else>
@@ -22,12 +20,8 @@ set -e
 <#assign container=deployed.container />
 <#include "/openshift/oc-login-container.ftl">
 
-PROJECT_CONFIG=`${deployed.container.ocHome}/oc get projects ${deployed.projectName} | tail -1 | awk '{print $1}'`
-if [ "$PROJECT_CONFIG" == "${deployed.projectName}" ];
-then
-    echo "Project already exists"
-else
-    ${deployed.container.ocHome}/oc new-project ${deployed.projectName} --description="${description}" --display-name="${displayName}"
-fi;
+${deployed.container.ocHome}/oc new-project ${deployed.projectName} --description="${description}" --display-name="${displayName}" || goto :error
+${deployed.container.ocHome}/oc logout || goto :error
+goto :EOF
 
-${deployed.container.ocHome}/oc logout
+<#include "/openshift/error.bat.ftl">
